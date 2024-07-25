@@ -1,0 +1,208 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+const { app, server, io } = require('../app');
+const debug = require('debug')('chatapp:server');
+const jwt = require("jsonwebtoken");
+const usersModel = require('../routes/users');
+const message = require('../routes/messages');
+
+const port = normalizePort(process.env.PORT || '3000');
+
+app.set('port', port);
+
+// server.listen(port);
+server.listen(port, '0.0.0.0', () => {
+  console.log(`Server running on port ${port}`);
+});
+server.on('error', onError);
+server.on('listening', onListening);
+
+
+const total_users = new Set()
+
+
+async function getMessages(Sender) {
+  try {
+    let arr = await message.find({
+      receiver: Sender,
+      sent: false
+    });
+    console.log('Messages:', arr);
+
+    for (const msg of arr) {
+      const receiver = msg.receiver;
+      try {
+        let user = await usersModel.findOne({ email: receiver });
+        if (user) {
+          console.log('User found:', user);
+          var socketId = user.SocketId;
+          if (socketId) {
+            await message.findOneAndUpdate(
+              { _id: msg._id },
+              { $set: { sent: true } },
+              { new: true }
+            );
+            io.to(socketId).emit('newMessage', msg);
+            console.log("user socket id is " + socketId);
+          }
+        }
+      } catch (err) {
+        console.log('Error finding user:', err);
+      }
+    }
+  } catch (error) {
+    console.error('Error in getMessages:', error);
+  }
+}
+
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+  if(token){
+    const decoded = jwt.decode(token);
+    console.log('Decoded token:', decoded);
+    socket.user = decoded;
+    next()
+  }
+  else{
+    console.log("No token found")
+    socket.disconnect();
+  }
+})
+
+
+io.on('connection', async socket => {
+  if (socket.user) {
+    let email = socket.user.email.toString();
+    console.log('User email:', email);
+    console.log('Socket ID:', socket.id);
+
+    try {
+      const query = { email: email };
+      console.log('Query:', query);
+
+      const user = await usersModel.findOneAndUpdate(
+        query,
+        { $set: { SocketId: socket.id } },
+        { new: true }
+      );
+
+
+      const connected = await usersModel.find({
+        $and: [
+          { SocketId: { $ne: null } },
+          { SocketId: { $ne: socket.id } }
+        ]
+      });
+      
+      console.log('Connected users:', connected);
+      socket.emit("connectedusers", connected)
+
+      socket.broadcast.emit("UserStatus", user, true);
+
+      console.log('User updated:', user);
+      getMessages(email);
+      if (!user) {
+        console.log('No user found with the given criteria.');
+      }
+    } catch (err) {
+      console.error('Error updating user:', err);
+    }
+
+    total_users.add(socket.id);
+    io.emit('Total-client', total_users.size);
+  }
+
+  socket.on('disconnect', async () => {
+    console.log('User disconnected');
+    if (socket.user) { 
+      let email = socket.user.email.toString();
+      try {
+        const query = { email: email };
+        console.log('Query:', query);
+
+        const user = await usersModel.findOneAndUpdate(
+          query,
+          { $set: { SocketId: null } },
+          { new: true }
+        );
+        socket.broadcast.emit("UserStatus", user, false);
+        console.log('User updated:', user);
+
+        if (!user) {
+          console.log('No user found with the given criteria.');
+        }
+      } catch (err) {
+        console.error('Error updating user:', err);
+      }
+    }
+    total_users.delete(socket.id);
+    io.emit('Total-client', total_users.size);
+  });
+});
+
+
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}
+

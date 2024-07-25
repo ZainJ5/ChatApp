@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>
+    ChatApp
+  </title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+    rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Righteous&display=swap" rel="stylesheet">
+  <link rel='stylesheet' href='/stylesheets/style.css' />
+  <link rel="shortcut icon" href="./favicon_io/favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+
+  <div class="section1">
+    <div class="top">
+      <h1>ChatApp</h1>
+      <div class="dropdown">
+        <svg class="dropdown-toggle" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="6" r="2" fill="#007BFF" />
+          <circle cx="12" cy="12" r="2" fill="#007BFF" />
+          <circle cx="12" cy="18" r="2" fill="#007BFF" />
+        </svg>
+        <div class="dropdown-list">
+          <a href="" id="1"><i class="fas fa-user-circle"></i> Upload Profile Photo</a>
+          <a href="" id="2"><i class="fas fa-moon"></i> Dark Mode</a>
+          <a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+          <a href="/delete" style="background-color: #F08080; color: white;"><i class="fas fa-sign-out-alt"></i> Delete Account</a>
+        </div>
+      </div>
+    </div>
+    <input class="search" type="search" placeholder="Search User">
+
+    <div class="card-container">
+      <% if (users.length> 0) { %>
+        <% users.forEach(user=> { %>
+          <div class="card usercard" data-user="<%=user._id %>">
+            <img src="<%=user.image%>" alt="/images/defaultimg.jpg">
+            <div class="user">
+              <h2>
+                <%= user.username.charAt(0).toUpperCase() + user.username.slice(1).toLowerCase() %>
+              </h2>
+              <p class="side-bar-email">
+                <%= user.email%>
+              </p>
+            </div>
+            <div class="status" id="<%= user._id %>">
+              Offline
+            </div>
+          </div>
+          <% }); %>
+            <% } else { %>
+              <p>No users found.</p>
+              <% } %>
+    </div>
+
+    <form id="uploadForm" action="/img" method="post" enctype="multipart/form-data" style="display: none;">
+      <input type="file" id="image" name="image" accept="image/*" required>
+    </form>
+
+  </div>
+
+  <div class="section2 not-clicked">
+    <div class="logo">
+      <img src="./images/chat1.gif" alt="Logo">
+      <h1>ChatApp</h1>
+    </div>
+    <p>Real-time Chats, Real-life Connections.</p>
+
+
+    <div class="clicked">
+
+      <div class="top-bar">
+
+        <div class="card" id="inner">
+
+          <button id="back" class="back-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="feather feather-arrow-left">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+          </button>
+
+          <div class="status-circle">
+            <img id="inner-image" src="/images/defaultimg.jpg">
+            <div class="circle">
+              <svg id="circle-status" width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" fill="#989898" />
+              </svg>
+            </div>
+          </div>
+          <div class="user" id="inside">
+            <h2 id="top-username">Username</h2>
+            <p id="top-email">User Email</p>
+          </div>
+        </div>
+
+      </div>
+
+
+
+      <div class="container">
+        <!-- New Created Messages will Appear here!! -->
+      </div>
+
+      <div class="bottom-clicked">
+        <form action="" id="message-form">
+          <input class="input" type="text" id="user-message" name="message" placeholder="Type a message"
+            autocomplete="off">
+          <button>
+            <img src="images/send-message.png">
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+  <script src="/javascripts/main.js"></script>
+</body>
+
+</html>
