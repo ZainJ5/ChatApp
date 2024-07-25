@@ -72,7 +72,7 @@ Array.from(userItems).forEach(item => {
 
     userId = this.getAttribute('data-user');
     var user123 = ''
-    fetch(`/${userId}`)
+    fetch(`/user/${userId}`)
       .then(response => response.json())
       .then(clickeduser => {
         let username = document.getElementById("top-username")
