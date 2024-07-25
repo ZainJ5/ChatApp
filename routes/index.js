@@ -29,7 +29,7 @@ router.post('/register', async function (req, res, next) {
       expires: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
       secure: process.env.NODE_ENV === 'production'
     });
-    res.redirect('/chat')
+    res.redirect('/')
   }
 });
 
@@ -53,7 +53,7 @@ router.post('/login', async (req, res) => {
           expires: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
           secure: process.env.NODE_ENV === 'production'
         });
-        res.redirect('/chat')
+        res.redirect('/')
       }
       else {
         res.send('One or more credentials are invalid')
@@ -107,7 +107,7 @@ router.get('/user/:id', async (req, res) => {
   }
 });
 
-router.get('/chat', Authentication, async (req, res) => {
+router.get('/', Authentication, async (req, res) => {
   try {
     username = req.user
     const users = await usersModel.find({ email: { $ne: username.email } });
