@@ -206,6 +206,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: auto;
+  scrollbar-width: none;
 }
 
 .message {
