@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path')
 const nodemailer = require('nodemailer');
-
+const mongoose = require('mongoose')
 
 const SECRETKEY = 'cd82fef53829280b5c2c6f031f367b99'
 
@@ -29,7 +29,7 @@ router.post('/register', async function (req, res, next) {
       expires: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
       secure: process.env.NODE_ENV === 'production'
     });
-    res.redirect('/')
+    res.redirect('/chat')
   }
 });
 
@@ -53,7 +53,7 @@ router.post('/login', async (req, res) => {
           expires: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
           secure: process.env.NODE_ENV === 'production'
         });
-        res.redirect('/')
+        res.redirect('/chat')
       }
       else {
         res.send('One or more credentials are invalid')
@@ -87,8 +87,27 @@ const Authentication = (req, res, next) => {
     })
   }
 }
+router.get('/user/:id', async (req, res) => {
+  try {
+    const userid = req.params.id;
 
-router.get('/', Authentication, async (req, res) => {
+    if (!mongoose.Types.ObjectId.isValid(userid)) {
+      return res.status(400).json({ message: 'Invalid user ID' });
+    }
+
+    const user = await usersModel.findById(userid);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(user);
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+router.get('/chat', Authentication, async (req, res) => {
   try {
     username = req.user
     const users = await usersModel.find({ email: { $ne: username.email } });
@@ -160,7 +179,7 @@ async function getChatHistory(user1, user2) {
       { sender: user1, receiver: user2 },
       { sender: user2, receiver: user1 }
     ]
-  }).sort({ date: 1, _id: 1 }).limit(70);
+  }).sort({ date: 1, _id: 1 }).limit(50);
 
   return messages;
 }
