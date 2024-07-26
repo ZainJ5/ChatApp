@@ -132,6 +132,8 @@ form.addEventListener('submit', (event) => {
   let messageInput = document.getElementById('user-message');
   let message = messageInput.value;
 
+  if (message) {
+  
   if (!userId) {
     console.error('User ID is not set');
     return;
@@ -154,6 +156,7 @@ form.addEventListener('submit', (event) => {
     .catch(error => {
       console.error('Error:', error);
     });
+  }
 });
 
 function createMessageElement(messageText, date, classname) {
